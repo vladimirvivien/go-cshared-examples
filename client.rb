@@ -51,7 +51,7 @@ print "awesome.Sort(", nums, ") = ", sorted, "\n"
 # Prepare type mapping for 
 # typedef struct { const char *p; GoInt n; } GoString;
 msg = "Hello Ruby!"
-str = Awesome::GoString.new
-str[:p] = FFI::MemoryPointer.from_string(msg) 
-str[:len] = msg.size
-print "logid ", Awesome.Log(str), "\n"
+gostr = Awesome::GoString.new
+gostr[:p] = FFI::MemoryPointer.from_string(msg) 
+gostr[:len] = msg.size
+print "logid ", Awesome.Log(gostr), "\n"
