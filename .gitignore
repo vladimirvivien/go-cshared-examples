@@ -1,0 +1,5 @@
+*.h
+*.so
+*.class
+*.jar
+node_modules
