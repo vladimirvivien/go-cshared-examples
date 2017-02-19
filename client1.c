@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "awesomelib/awesome.h"
+#include "awesome.h"
 
 int main() {
     printf("Using awesome lib from C:\n");

@@ -5,7 +5,7 @@ import java.lang.Long;
 public class Client {
    public interface Awesome extends Library {
         // GoSlice class maps to:
-        // C typedef struct { void *data; GoInt len; GoInt cap; }
+        // C type struct { void *data; GoInt len; GoInt cap; }
         public class GoSlice extends Structure {
             public static class ByValue extends GoSlice implements Structure.ByValue {}
             public Pointer data;
@@ -17,7 +17,7 @@ public class Client {
         }
 
         // GoString class maps to:
-        // C typedef struct { const char *p; GoInt n; }
+        // C type struct { const char *p; GoInt n; }
         public class GoString extends Structure {
             public static class ByValue extends GoString implements Structure.ByValue {}
             public String p;
@@ -37,7 +37,7 @@ public class Client {
  
    static public void main(String argv[]) {
         Awesome awesome = (Awesome) Native.loadLibrary(
-            "awesomelib/awesome.so", Awesome.class);
+            "./awesome.so", Awesome.class);
 
         System.out.printf("awesome.Add(12, 99) = %s\n", awesome.Add(12, 99));
         System.out.printf("awesome.Cosine(1.0) = %s\n", awesome.Cosine(1.0));

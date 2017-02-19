@@ -1,17 +1,21 @@
 require 'ffi'
 
-# Module to define shared lib
+# Module that represents shared lib
 module Awesome
   extend FFI::Library
   
-  ffi_lib 'awesomelib/awesome.so'
+  ffi_lib './awesome.so'
   
+  # define class GoSlice to map to:
+  # C type struct { void *data; GoInt len; GoInt cap; }
   class GoSlice < FFI::Struct
     layout :data,  :pointer,
            :len,   :long_long,
            :cap,   :long_long
   end
 
+  # define class GoString to map:
+  # C type struct { const char *p; GoInt n; }
   class GoString < FFI::Struct
     layout :p,     :pointer,
            :len,   :long_long
@@ -31,25 +35,18 @@ print "awesome.Add(12, 99) = ",  Awesome.Add(12, 99), "\n"
 print "awesome.Cosine(1) = ", Awesome.Cosine(1), "\n"
 
 # call Sort
-# Prepare type mapping for
-# C typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
-# Create poninter to array
 nums = [92,101,3,44,7]
 ptr = FFI::MemoryPointer.new :long_long, nums.size
 ptr.write_array_of_long_long  nums
-# Create new GoSlice object to map to struct
 slice = Awesome::GoSlice.new
 slice[:data] = ptr
 slice[:len] = nums.size
 slice[:cap] = nums.size
 Awesome.Sort(slice)
-# retrieve sorted data
 sorted = slice[:data].read_array_of_long_long nums.size
 print "awesome.Sort(", nums, ") = ", sorted, "\n"
 
 # Call Log
-# Prepare type mapping for 
-# typedef struct { const char *p; GoInt n; } GoString;
 msg = "Hello Ruby!"
 gostr = Awesome::GoString.new
 gostr[:p] = FFI::MemoryPointer.from_string(msg) 
