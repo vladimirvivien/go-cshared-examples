@@ -1,6 +1,6 @@
 # Calling Go Functions from Other Languages using C Shared Libraries
 
-This respository contains source examples for the article [*Calling Go Functions from Other Languages*](https://medium.com/learning-the-go-programming-language/calling-go-functions-from-other-languages-4c7d8bcc69bf#.n73as5d6d) (medium.com).  Using the `-buildmode=c-shared` build flag, the compiler outputs a standard shared object binary file (.so) exposing Go functions as a C-style APIs. This lets programmers create Go libraries that can be called from other languages including C, Python, Ruby, Node, and Java as done in this repository.
+This respository contains source examples for the article [*Calling Go Functions from Other Languages*](https://medium.com/learning-the-go-programming-language/calling-go-functions-from-other-languages-4c7d8bcc69bf#.n73as5d6d) (medium.com).  Using the `-buildmode=c-shared` build flag, the compiler outputs a standard shared object binary file (.so) exposing Go functions as a C-style APIs. This lets programmers create Go libraries that can be called from other languages including C, Python, Ruby, Node, and Java (see contributed example for Lua) as done in this repository.
 
 ## The Go Code
 First, let us write the Go code. Assume that we have written an `awesome` Go library that we want to make available to other languages. There are four requirements to follow before compiling the code into a shared library: 
@@ -543,5 +543,65 @@ awesome.Cosine(1.0) = 0.5403023058681398
 awesome.Sort(53,11,5,2,88) = [2 5 11 53 88 ]
 Hello Java!
 ```
+## From Lua (contributed)
+This example was contributed by [@titpetric](https://github.com/titpetric) (thank you!) [PR #2](https://github.com/vladimirvivien/go-cshared-examples/pull/2)
+
+The forllowing shows how to invoke exported Go functions from Lua. As before, it uses an FFI library to dynamically load the shared object file and bind to the exported function symbols.
+
+File [client.lua](./client.lua)
+```lua
+local ffi = require("ffi")
+local awesome = ffi.load("./awesome.so")
+
+ffi.cdef([[
+typedef long long GoInt64;
+typedef unsigned long long GoUint64;
+typedef GoInt64 GoInt;
+typedef GoUint64 GoUint;
+typedef double GoFloat64;
+
+typedef struct { const char *p; GoInt n; } GoString;
+typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
+
+extern GoInt Add(GoInt p0, GoInt p1);
+extern GoFloat64 Cosine(GoFloat64 p0);
+extern void Sort(GoSlice p0);
+extern GoInt Log(GoString p0);
+]]);
+
+
+io.write( string.format("awesome.Add(12, 99) = %f\n", math.floor(tonumber(awesome.Add(12,99)))) )
+
+io.write( string.format("awesome.Cosine(1) = %f\n", tonumber(awesome.Cosine(1))) )
+
+local nums = ffi.new("long long[5]", {12,54,0,423,9})
+local numsPointer = ffi.new("void *", nums);
+local typeSlice = ffi.metatype("GoSlice", {})
+local slice = typeSlice(numsPointer, 5, 5)
+awesome.Sort(slice)
+
+io.write("awesome.Sort([12,54,9,423,9] = ")
+for i=0,4 do
+	if i > 0 then
+		io.write(", ")
+	end
+	io.write(tonumber(nums[i]))
+end
+io.write("\n");
+
+local typeString = ffi.metatype("GoString", {})
+local logString = typeString("Hello LUA!", 10)
+awesome.Log(logString)
+```
+When the example is executed, it produces the following:
+```
+$> luajit client.lua
+awesome.Add(12, 99) = 111.000000
+awesome.Cosine(1) = 0.540302
+awesome.Sort([12,54,9,423,9] = 0, 9, 12, 54, 423
+Hello LUA!
+```
+
+
 ## Conclusion
-This repo shows how to create a Go library that can be used from C, Python, Ruby, Node, and Java. By compiling Go packages into C-style shared libraries, Go programmers have a powerful way of integrating their code with any modern language that supports dynamic loading and linking of shared object files.
+This repo shows how to create a Go library that can be used from C, Python, Ruby, Node, Java, Lua. By compiling Go packages into C-style shared libraries, Go programmers have a powerful way of integrating their code with any modern language that supports dynamic loading and linking of shared object files.
