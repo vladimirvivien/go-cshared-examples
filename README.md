@@ -544,7 +544,7 @@ awesome.Sort(53,11,5,2,88) = [2 5 11 53 88 ]
 Hello Java!
 ```
 ## From Lua (contributed)
-This example was contributed by [@titpetric](https://github.com/titpetric) (thank you!) [PR #2](https://github.com/vladimirvivien/go-cshared-examples/pull/2)
+This example was contributed by [@titpetric](https://github.com/titpetric). See his insightful write up on [*Calling Go functions from LUA*](https://scene-si.org/2017/03/13/calling-go-functions-from-lua/).
 
 The forllowing shows how to invoke exported Go functions from Lua. As before, it uses an FFI library to dynamically load the shared object file and bind to the exported function symbols.
 
