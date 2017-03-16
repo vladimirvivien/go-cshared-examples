@@ -277,6 +277,7 @@ In Python things get a little easier. We use the `ctypes` [foreign function libr
 
 File [client.py](./client.py)
 ```python
+from __future__ import print_function
 from ctypes import *
 
 lib = cdll.LoadLibrary("./awesome.so")
@@ -284,12 +285,12 @@ lib = cdll.LoadLibrary("./awesome.so")
 # describe and invoke Add()
 lib.Add.argtypes = [c_longlong, c_longlong]
 lib.Add.restype = c_longlong
-print "awesome.Add(12,99) = %d" % lib.Add(12,99)
+print("awesome.Add(12,99) = %d" % lib.Add(12,99))
 
 # describe and invoke Cosine()
 lib.Cosine.argtypes = [c_double]
 lib.Cosine.restype = c_double
-print "awesome.Cosine(1) = %f" % lib.Cosine(1)
+print("awesome.Cosine(1) = %f" % lib.Cosine(1))
 
 # define class GoSlice to map to:
 # C type struct { void *data; GoInt len; GoInt cap; }
@@ -302,10 +303,7 @@ nums = GoSlice((c_void_p * 5)(74, 4, 122, 9, 12), 5, 5)
 lib.Sort.argtypes = [GoSlice]
 lib.Sort.restype = None
 lib.Sort(nums)
-print "awesome.Sort(74,4,122,9,12) = [",
-for i in range(nums.len):
-    print "%d "% nums.data[i],
-print "]"
+print("awesome.Sort(74,4,122,9,12) = %s" % [nums.data[i] for i in range(nums.len)])
 
 # define class GoString to map:
 # C type struct { const char *p; GoInt n; }
@@ -316,15 +314,16 @@ class GoString(Structure):
 lib.Log.argtypes = [GoString]
 lib.Log.restype = c_longlong
 msg = GoString(b"Hello Python!", 13)
-print "log id %d"% lib.Log(msg)
+print("log id %d"% lib.Log(msg))
 ```
 Note the `lib` variable represents the loaded symbols from the shared object file. We also defined Python classes `GoString` and `GoSlice` to map to their respective C struct types. When the Python code is executed, it calls the Go functions in the shared object producing the following output:
 ```shell
 $> python client.py
 awesome.Add(12,99) = 111
 awesome.Cosine(1) = 0.540302
-awesome.Sort(74,4,122,9,12) = [ 4 9 12 74 122 ]
+awesome.Sort(74,4,122,9,12) = [4, 9, 12, 74, 122]
 Hello Python!
+log id 1
 ```
 ## From Ruby
 Calling Go functions from Ruby follows a similar pattern as above. We use the the [FFI gem](https://github.com/ffi/ffi) to dynamically load and call exported Go functions in the awesome.so shared object file as shown in the following snippet.
