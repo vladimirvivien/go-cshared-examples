@@ -657,7 +657,49 @@ awesome.Cosine(1) = 0.540302
 awesome.Sort([12,54,9,423,9] = 0, 9, 12, 54, 423
 Hello LUA!
 ```
+## From Julia (Contributed)
+The following example was contributed by [@r9y9](https://github.com/r9y9). It shows how to invoke exported Go functions from the Julia language. As [documented here](https://docs.julialang.org/en/stable/manual/calling-c-and-fortran-code/), Julia has the capabilities to invoke exported functions from shared libraries similar to other languages discussed here.
 
+File [client.jl](./client.jl)
+
+```julia
+struct GoSlice
+    arr::Ptr{Void}
+    len::Int64
+    cap::Int64
+end
+GoSlice(a::Vector, cap=10) = GoSlice(pointer(a), length(a), cap)
+
+struct GoStr
+    p::Ptr{Cchar}
+    len::Int64
+end
+GoStr(s::String) = GoStr(pointer(s), length(s))
+
+const libawesome = "awesome.so"
+
+Add(x,y) = ccall((:Add, libawesome), Int,(Int,Int), x,y)
+Cosine(x) = ccall((:Cosine, libawesome), Float64, (Float64,), x)
+function Sort(vals)
+    ccall((:Sort, libawesome), Void, (GoSlice,), GoSlice(vals))
+    return vals # for convenience
+end
+Log(msg) = ccall((:Log, libawesome), Int, (GoStr,), GoStr(msg))
+
+for ex in [:(Add(12, 9)),:(Cosine(1)), :(Sort([77,12,5,99,28,23]))]
+    println("awesome.$ex = $(eval(ex))")
+end
+Log("Hello from Julia!")
+```
+When the example is executed, it produces the following:
+
+```
+> julia client.jl
+awesome.Add(12, 9) = 21
+awesome.Cosine(1) = 0.5403023058681398
+awesome.Sort([77, 12, 5, 99, 28, 23]) = [5, 12, 23, 28, 77, 99]
+Hello from Julia!
+```
 
 ## Conclusion
-This repo shows how to create a Go library that can be used from C, Python, Ruby, Node, Java, Lua. By compiling Go packages into C-style shared libraries, Go programmers have a powerful way of integrating their code with any modern language that supports dynamic loading and linking of shared object files.
+This repo shows how to create a Go library that can be used from C, Python, Ruby, Node, Java, Lua, Julia. By compiling Go packages into C-style shared libraries, Go programmers have a powerful way of integrating their code with any modern language that supports dynamic loading and linking of shared object files.
