@@ -335,7 +335,7 @@ following example uses a C-wrapper to defined the exported Go types.  This makes
 the python example less opaque and even easier to understand.
 
 File [client-cffi.py](./client-cffi.py)
-```
+```python
 from __future__ import print_function
 import sys
 from cffi import FFI
