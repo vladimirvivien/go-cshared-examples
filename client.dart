@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
-// dart does not all 
-// on macOS backup Dart binary and remove signature to load unsigned awesome.so
-// find binary folder and run "codesign --remove-signature dart"
+// - foreign function interface in dart 2.5 does not allow calls using structures 
+// so converted them to pointers
+
+// - macOS blocks loading function without matching signature of the dart binary
+// so removed dart binary signature by running "codesign --remove-signature dart"
 
 class GoSlice extends Struct<GoSlice> {
   Pointer<Int64> data;
