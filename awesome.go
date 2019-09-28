@@ -27,6 +27,11 @@ func Sort(vals []int) {
 	sort.Ints(vals)
 }
 
+//export SortPtr
+func SortPtr(vals *[]int) {
+	Sort(*vals)
+}
+
 //export Log
 func Log(msg string) int {
 	mtx.Lock()
@@ -35,5 +40,11 @@ func Log(msg string) int {
 	count++
 	return count
 }
+
+//export LogPtr
+func LogPtr(msg *string) int {
+	return Log(*msg);
+}
+
 
 func main() {}

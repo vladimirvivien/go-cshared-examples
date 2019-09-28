@@ -2,4 +2,5 @@
 *.so
 *.class
 *.jar
+.vscode/*
 node_modules
