@@ -1,8 +1,8 @@
-# The code is written for Julia v0.6 and later.
+# The code is written for Julia v1.0 and later.
 # https://github.com/JuliaLang/julia
 
 struct GoSlice
-    arr::Ptr{Void}
+    arr::Ptr{Cvoid}
     len::Int64
     cap::Int64
 end
@@ -19,7 +19,7 @@ const libawesome = "awesome.so"
 Add(x,y) = ccall((:Add, libawesome), Int,(Int,Int), x,y)
 Cosine(x) = ccall((:Cosine, libawesome), Float64, (Float64,), x)
 function Sort(vals)
-    ccall((:Sort, libawesome), Void, (GoSlice,), GoSlice(vals))
+    ccall((:Sort, libawesome), Cvoid, (GoSlice,), GoSlice(vals))
     return vals # for convenience
 end
 Log(msg) = ccall((:Log, libawesome), Int, (GoStr,), GoStr(msg))
