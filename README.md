@@ -699,8 +699,8 @@ awesome.Cosine(1) = 0.5403023058681398
 awesome.Sort([77, 12, 5, 99, 28, 23]) = [5, 12, 23, 28, 77, 99]
 Hello from Julia!
 ```
-From Dart (contributed)
-The following example was contributed by @purfield. It shows how to invoke exported Go functions from the Dart language. As documented [here](https://dart.dev/guides/libraries/c-interop), Dart has the capability to invoke exported functions from shared libraries similar to other languages discussed here.
+## From Dart (Contributed)
+The following example was contributed by @dpurfield. It shows how to invoke exported Go functions from the Dart language. As documented [here](https://dart.dev/guides/libraries/c-interop), Dart has the capability to invoke exported functions from shared libraries similar to other languages discussed here.
 
 File [client.dart](./client.dart)
 
