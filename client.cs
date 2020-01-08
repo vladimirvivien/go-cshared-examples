@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 class Awesome
 {
-    const string libName = "awesome";
+    const string libName = "awesome.so";
 
     public struct GoSlice
     {
