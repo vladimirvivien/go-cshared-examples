@@ -28,10 +28,10 @@ cdef extern from "awesome.h" nogil:
         GoInt len
         GoInt cap
 
-    GoInt Add(GoInt p0, GoInt p1)
+    extern GoInt Add(GoInt p0, GoInt p1)
 
-    GoFloat64 Cosine(GoFloat64 p0)
+    extern GoFloat64 Cosine(GoFloat64 p0)
 
-    void Sort(GoSlice p0)
+    extern void Sort(GoSlice p0)
 
-    GoInt Log(GoString p0)
+    extern GoInt Log(GoString p0)
