@@ -892,5 +892,128 @@ awesome.Sort(77,12,5,99,28,23): 5, 12, 23, 28, 77, 99
 Hello from C#!
 ```
 
+## From Zig (Contributed)
+
+The following example was contributed by @dgv. It shows how to invoke exported Go functions from the Zig language. As documented [here](https://ziglang.org/documentation/master/#C), Zig has the natural capability to interop with C and invoke exported functions from shared libraries not depending on libc.
+
+There are two ways to use the shared object library to call Go functions from Zig like C. First, we can statically bind the shared library at compilation, but dynamically link it at runtime. Or, have the Go function symbols be dynamically loaded and bound at runtime.
+
+### Dynamically linked
+
+In this approach, we use the header file to statically reference types and functions exported in the shared object file. The code is simple and clean as shown below:
+
+File [client1.zig](./client1.zig)
+
+```zig
+const std = @import("std");
+const awesome = @cImport({
+    @cInclude("awesome.h");
+});
+
+pub fn main() !void {
+    //Call Add() - passing integer params, interger result
+    const a: awesome.GoInt = 12;
+    const b: awesome.GoInt = 99;
+    std.debug.print("awesome.Add(12,99) = {d}\n", .{awesome.Add(a, b)});
+
+    //Call Cosine() - passing float param, float returned
+    std.debug.print("awesome.Cosine(1) = {d}\n", .{awesome.Cosine(1.0)});
+
+    //Call SortPtr() - converting the array and passing as GoSlice pointer
+    const data = [6]awesome.GoInt{ 77, 12, 5, 99, 28, 23 };
+    const nums = awesome.GoSlice{ .data = @ptrCast(@constCast(&data)), .len = data.len, .cap = data.len };
+    awesome.SortPtr(@ptrCast(@constCast(&nums)));
+    std.debug.print("awesome.SortPtr(77,12,5,99,28,23): ", .{});
+    for (@as(*align(1) const [nums.len]awesome.GoInt, @ptrCast(nums.data))) |n| {
+        std.debug.print("{d},", .{n});
+    }
+    std.debug.print("\n", .{});
+
+    //Call Log() - passing string value
+    const msg = awesome.GoString{ .p = "Hello from Zig!", .n = 16 };
+    _ = awesome.Log(msg);
+}
+```
+
+Next we use Zig to compile and run the code, specifying the shared object library, it links to the awesome.so library, calling the functions that were exported from Go as the output shows below.
+
+```shell
+$> zig run client1.zig -I. ./awesome.so
+awesome.Add(12,99) = 111
+awesome.Cosine(1) = 0.5403023058681398
+awesome.SortPtr(77,12,5,99,28,23): 5,12,23,28,77,99,
+Hello from Zig!
+```
+
+### Dynamically Loaded
+
+In this approach, the Zig code uses the dynamic library loading to dynamically load and bind exported symbols. It uses functions defined in [DynLib](https://ziglang.org/documentation/master/std/#std.dynamic_library.DynLib) such as `open` to open the library file, `lookup` to look up a symbol, and `close` to close the shared library file.
+
+Because the binding and linking is done in your source code, this version is lengthier. However, it is doing the same thing as before, as highlighted in the following snippet (some print statements and error handling omitted).
+
+File [client2.zig](./client2.zig)
+
+```zig
+const std = @import("std");
+
+const go_int = i64;
+const go_float = f64;
+const go_str = []const u8;
+const go_slice = extern struct {
+    data: *[]go_int,
+    len: go_int,
+    cap: go_int,
+};
+var Add: *const fn (a: go_int, b: go_int) go_int = undefined;
+var Cosine: *const fn (n: go_float) go_float = undefined;
+var SortPtr: *const fn (nums: *go_slice) void = undefined;
+var Log: *const fn (str: go_str) go_int = undefined;
+
+pub fn main() !void {
+    // use dlopen to load shared object
+    var awesome = try std.DynLib.open("./awesome.so");
+    // close file handle when done
+    defer awesome.close();
+
+    // resolve Add symbol and assign to fn ptr
+    Add = awesome.lookup(@TypeOf(Add), "Add") orelse return error.LookupFail;
+    // call Add()
+    std.debug.print("awesome.Add(12,99) = {d}\n", .{Add(12, 99)});
+
+    // resolve Cosine symbol
+    Cosine = awesome.lookup(@TypeOf(Cosine), "Cosine") orelse return error.LookupFail;
+    // Call Cosine
+    std.debug.print("awesome.Cosine(1) = {d}\n", .{Cosine(1.0)});
+
+    // resolve SortPtr symbol
+    SortPtr = awesome.lookup(@TypeOf(SortPtr), "SortPtr") orelse return error.LookupFail;
+    const data = [5]go_int{ 44, 23, 7, 66, 2 };
+    const nums = go_slice{ .data = @ptrCast(@constCast(&data)), .len = data.len, .cap = data.len };
+    // call SortPtr
+    SortPtr(@ptrCast(@constCast(&nums)));
+    std.debug.print("awesome.SortPtr(44,23,7,66,2): ", .{});
+    for (@as(*align(1) const [nums.len]go_int, @ptrCast(nums.data))) |n| {
+        std.debug.print("{d},", .{n});
+    }
+    std.debug.print("\n", .{});
+
+    // resolve Log symbol
+    Log = awesome.lookup(@TypeOf(Log), "Log") orelse return error.LookupFail;
+    // call Log
+    _ = Log("Hello from Zig!");
+}
+```
+
+In the previous code, we define our own subset of Go compatible C types `go_int`, `go_float`, `go_slice`, and `go_str`. We use `lookup` to load symbols `Add`, `Cosine`, `Sort`, and `Log` and assign them to their respective function pointers. Next, we compile the code linking it with the `dl` library (not the awesome.so) as follows:
+When the code is executed, the C binary loads and links to shared library awesome.so producing the following output:
+
+```shell
+$> zig run client2.zig ./awesome.so
+awesome.Add(12,99) = 111
+awesome.Cosine(1) = 0.5403023058681398
+awesome.SortPtr(44,23,7,66,2): 2,7,23,44,66,
+Hello from Zig!
+```
+
 ## Conclusion
 This repo shows how to create a Go library that can be used from C, Python, Ruby, Node, Java, Lua, Julia. By compiling Go packages into C-style shared libraries, Go programmers have a powerful way of integrating their code with any modern language that supports dynamic loading and linking of shared object files.
